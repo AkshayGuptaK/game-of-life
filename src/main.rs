@@ -1,3 +1,5 @@
+//! A simulation for Life-like cellular automaton
+
 use bevy::{
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
@@ -23,13 +25,17 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle {
+        transform: Transform::from_xyz(0.0, -25.0, 0.0),
+        ..default()
+    });
     let cells = GRID_WIDTH * GRID_HEIGHT;
     for i in 0..cells {
         spawn_cell(&mut commands, &mut meshes, &mut materials, i);
     }
 }
 
+// can remove when bevy 0.14 is released
 fn fit_canvas_to_parent() {
     let canvas: HtmlCanvasElement = web_sys::window()
         .unwrap()
