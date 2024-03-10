@@ -3,6 +3,9 @@ use bevy::{
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 
+const GRID_WIDTH: u32 = 24;
+const GRID_HEIGHT: u32 = 12;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -18,7 +21,8 @@ fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn(Camera2dBundle::default());
-    for i in 0..12 {
+    let cells = GRID_WIDTH * GRID_HEIGHT;
+    for i in 0..cells {
         spawn_cell(&mut commands, &mut meshes, &mut materials, i);
     }
 }
@@ -39,7 +43,7 @@ fn spawn_cell(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
-    position: u32,
+    index: u32,
 ) {
     let alive = rand::random();
     commands.spawn(CellBundle {
@@ -47,10 +51,21 @@ fn spawn_cell(
         sprite: MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(Rectangle::new(50.0, 50.0))),
             material: materials.add(life_to_color(alive)),
-            transform: Transform::from_xyz(50. * position as f32, 0.0, 0.0),
+            transform: index_to_transform(index),
             ..default()
         },
     });
+}
+
+fn index_to_transform(index: u32) -> Transform {
+    let cell_size = 50.;
+    let y_offset = -cell_size * GRID_HEIGHT as f32 / 2.;
+    let x_offset = -cell_size * GRID_WIDTH as f32 / 2.;
+    let row = index / GRID_WIDTH;
+    let column = index - row * GRID_WIDTH;
+    let x = column as f32 * cell_size + x_offset;
+    let y = row as f32 * cell_size + y_offset;
+    Transform::from_xyz(x, y, 0.0)
 }
 
 fn toggle(
