@@ -2,14 +2,17 @@ use bevy::{
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
+use web_sys::wasm_bindgen::JsCast;
+use web_sys::HtmlCanvasElement;
 
-const GRID_WIDTH: u32 = 24;
-const GRID_HEIGHT: u32 = 12;
+const GRID_WIDTH: u32 = 20;
+const GRID_HEIGHT: u32 = 20;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .insert_resource(GenTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
+        .insert_resource(GenTimer(Timer::from_seconds(1.5, TimerMode::Repeating)))
+        .add_systems(Startup, fit_canvas_to_parent)
         .add_systems(Startup, setup)
         .add_systems(Update, toggle)
         .run();
@@ -25,6 +28,20 @@ fn setup(
     for i in 0..cells {
         spawn_cell(&mut commands, &mut meshes, &mut materials, i);
     }
+}
+
+fn fit_canvas_to_parent() {
+    let canvas: HtmlCanvasElement = web_sys::window()
+        .unwrap()
+        .document()
+        .unwrap()
+        .query_selector("canvas")
+        .unwrap()
+        .unwrap()
+        .unchecked_into();
+    let style = canvas.style();
+    style.set_property("width", "100%").unwrap();
+    style.set_property("height", "100%").unwrap();
 }
 
 #[derive(Component)]
@@ -57,17 +74,6 @@ fn spawn_cell(
     });
 }
 
-fn index_to_transform(index: u32) -> Transform {
-    let cell_size = 50.;
-    let y_offset = -cell_size * GRID_HEIGHT as f32 / 2.;
-    let x_offset = -cell_size * GRID_WIDTH as f32 / 2.;
-    let row = index / GRID_WIDTH;
-    let column = index - row * GRID_WIDTH;
-    let x = column as f32 * cell_size + x_offset;
-    let y = row as f32 * cell_size + y_offset;
-    Transform::from_xyz(x, y, 0.0)
-}
-
 fn toggle(
     mut commands: Commands,
     time: Res<Time>,
@@ -84,6 +90,17 @@ fn toggle(
                 .insert(materials.add(life_to_color(alive)));
         }
     }
+}
+
+fn index_to_transform(index: u32) -> Transform {
+    let cell_size = 50.;
+    let y_offset = -cell_size * GRID_HEIGHT as f32 / 2.;
+    let x_offset = -cell_size * GRID_WIDTH as f32 / 2.;
+    let row = index / GRID_WIDTH;
+    let column = index - row * GRID_WIDTH;
+    let x = column as f32 * cell_size + x_offset;
+    let y = row as f32 * cell_size + y_offset;
+    Transform::from_xyz(x, y, 0.0)
 }
 
 fn life_to_color(life: bool) -> Color {
